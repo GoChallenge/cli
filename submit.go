@@ -15,13 +15,13 @@ import (
 )
 
 var (
-	zipFile  = "gochal-%s.zip" // the username is added to the filename
+	zipFile  = "gochallenge.zip" // the username is added to the filename
 	errMixed = errors.New("Files and Folders both received")
 )
 
 func submit(c *cli.Context) {
-	logdetails, err := getLoginDetails()
-	if err != nil || logdetails.GithubUsername == "" || logdetails.ApiKey == "" {
+	config, err := getConfig()
+	if err != nil || config.ApiKey == "" {
 		fmt.Println("Please log in")
 		return
 	}
@@ -53,7 +53,7 @@ func submit(c *cli.Context) {
 func testsPass(testDir string) (string, error) {
 	cmd := exec.Command("go", "test")
 	cmd.Dir = testDir
-	out, err:= cmd.Output()
+	out, err := cmd.Output()
 	return string(out), err
 }
 
@@ -147,9 +147,6 @@ func newArchWriter() (*zip.Writer, error) {
 }
 
 func archiveName() (string, error) {
-	logdetails, err := getLoginDetails()
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(zipFile, logdetails.GithubUsername), nil
+	// TODO rename file with current challenge
+	return zipFile, nil
 }

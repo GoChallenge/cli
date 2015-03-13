@@ -18,28 +18,27 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:      "fetch",
-			ShortName: "f",
-			Action:    fetch,
-			Usage:     "Fetch the latest challenge",
-		},
-		{
-			Name:      "login",
-			ShortName: "l",
-			Action:    login,
-			Usage:     "Save golang-challenge.com api credentials",
-		},
-		{
-			Name:      "logout",
-			ShortName: "o",
-			Action:    logout,
-			Usage:     "Clear golang-challenge.com api credentials",
+			Name:      "configure",
+			ShortName: "c",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "key, k",
+					Usage: "exercism.io API key (see http://exercism.io/account)",
+				}},
+			Action: configure,
+			Usage:  "Writes the config values to a json file",
 		},
 		{
 			Name:      "submit",
 			ShortName: "s",
 			Action:    submit,
 			Usage:     "Submit your solution to the latest challenge",
+		},
+		{
+			Name:      "fetch",
+			ShortName: "f",
+			Action:    fetch,
+			Usage:     "Fetch the latest challenge",
 		},
 	}
 

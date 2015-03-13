@@ -12,14 +12,13 @@ From the second challenge onwards, participants will have the option of using a 
 
 So far it has this functionality:
 
- - `login` - Participants can store their username and apikey locally. This info is used during submission
- - `logout` - Stored info is deleted
+ - `configure` - Stores apikey locally. This is used during submission
  - `fetch` - Can retrieve a repo once it has the repo name. Uses the `go get` command to do this.
- - `submit` - Checks if the user is logged in. If he is, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides. 
+ - `submit` - Checks if apikey is present. If it is, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides. 
 
 TODO
 
- - login should verify the username+apikey pair with the server
+ - configure should verify the apikey pair with the server
  - fetch should get the current repo name from the server (hardcoded for now)
  - fetch should retrieve past challenges
  - submit should upload the zip file to the server
