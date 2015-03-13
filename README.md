@@ -15,7 +15,7 @@ So far it has this functionality:
  - `login` - Participants can store their username and apikey locally. This info is used during submission
  - `logout` - Stored info is deleted
  - `fetch` - Can retrieve a repo once it has the repo name. Uses the `go get` command to do this.
- - `submit` - Checks if the user is logged in. If he is, makes a zip archive of the files/folder the user provides. 
+ - `submit` - Checks if the user is logged in. If he is, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides. 
 
 TODO
 
@@ -23,4 +23,3 @@ TODO
  - fetch should get the current repo name from the server (hardcoded for now)
  - fetch should retrieve past challenges
  - submit should upload the zip file to the server
- - submit should run the tests
