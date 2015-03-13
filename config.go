@@ -25,26 +25,9 @@ func (cd *configData) printData() {
 }
 
 func showConfig() {
-	configFilePath, err := getConfigFilePath()
+	currentConfigData, err := getCurrentConfig()
 	if err != nil {
-		return
-	}
-
-	configFileContent, err := ioutil.ReadFile(configFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Println("It seems you haven't create a config file yet. Please create one by using the `config` command")
-			return
-		}
-
-		fmt.Printf("Unable to open config file %s: %s\n", configFilePath, err.Error())
-		return
-	}
-
-	currentConfigData := new(configData)
-	err = json.Unmarshal(configFileContent, currentConfigData)
-	if err != nil {
-		fmt.Printf("Unable to decode Json: %s\n", err.Error())
+		fmt.Printf("Error while reading current config: %s\n", err.Error())
 		return
 	}
 
@@ -126,4 +109,27 @@ func getConfigFilePath() (string, error) {
 	configFilePath := path.Join(userHomeDir, configFileName)
 
 	return configFilePath, nil
+}
+
+func getCurrentConfig() (*configData, error) {
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return nil, err
+	}
+
+	configFileContent, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("It seems you haven't create a config file yet. Please create one by using the `config` command")
+		}
+		return nil, err
+	}
+
+	currentConfigData := new(configData)
+	err = json.Unmarshal(configFileContent, currentConfigData)
+	if err != nil {
+		return nil, err
+	}
+
+	return currentConfigData, nil
 }
