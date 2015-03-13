@@ -1,4 +1,4 @@
-Golang Challenge CLI
+Go Challenge CLI
 ===============
 The requirement is to create a web site and associated tools to allow easy participation in the GoChallenge. This issue is to discuss a CLI tool that can be used by the participants to interact with the site.
 
