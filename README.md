@@ -22,3 +22,9 @@ TODO
  - fetch should get the current repo name from the server (hardcoded for now)
  - fetch should retrieve past challenges
  - submit should upload the zip file to the server
+
+Testing:
+ This repo contains a fake_api.json file that can be used to test a few aspects of the CLI tool. To run it, follow these steps. You'll need nodejs and NPM installed:
+ - npm install -g json-server
+ - json-server fake_api.json
+ - Enjoy!

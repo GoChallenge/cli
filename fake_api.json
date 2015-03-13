@@ -1,0 +1,8 @@
+{
+  "current": {
+    "id": 1,
+    "url": "https://golang-challenge.com/challenges/1",
+    "status": "open",
+    "import": "github.com/golang/example/hello"
+  }
+}
