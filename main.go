@@ -17,12 +17,12 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
-		// {
-		// 	Name:      "fetch",
-		// 	ShortName: "f",
-		// 	Action:    fetch,
-		// 	Usage:     "Fetch the latest challenge",
-		// },
+		{
+			Name:      "fetch",
+			ShortName: "f",
+			Action:    fetch,
+			Usage:     "Fetch the latest challenge",
+		},
 		{
 			Name:      "login",
 			ShortName: "l",
