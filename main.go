@@ -17,18 +17,30 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		// {
+		// 	Name:      "fetch",
+		// 	ShortName: "f",
+		// 	Action:    fetch,
+		// 	Usage:     "Fetch the latest challenge",
+		// },
 		{
-			Name:      "config",
-			ShortName: "c",
-			Action:    writeConfig,
-			Usage:     "Save and displayes configuration settings for the CLI app",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "apiKey",
-					Usage: "Your api key. Get this from golang-challenge.com/account/. If this flag isn't present, prints out the current config",
-				},
-			},
+			Name:      "login",
+			ShortName: "l",
+			Action:    login,
+			Usage:     "Save golang-challenge.com api credentials",
 		},
+		{
+			Name:      "logout",
+			ShortName: "o",
+			Action:    logout,
+			Usage:     "Clear golang-challenge.com api credentials",
+		},
+		// {
+		// 	Name:      "submit",
+		// 	ShortName: "s",
+		// 	Action:    submit,
+		// 	Usage:     "Submit your solution to the latest challenge",
+		// },
 	}
 
 	app.Run(os.Args)
