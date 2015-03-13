@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -30,6 +31,15 @@ func submit(c *cli.Context) {
 		return
 	}
 
+	testDir := path.Dir(c.Args().First())
+	fmt.Println("testDir")
+	out, err := testsPass(testDir)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println(out)
+		return
+	}
+
 	archive, err := createArchive(c.Args())
 	if err != nil {
 		fmt.Println(err)
@@ -38,6 +48,13 @@ func submit(c *cli.Context) {
 	fmt.Println("Created " + archive)
 
 	// TODO upload to server
+}
+
+func testsPass(testDir string) (string, error) {
+	cmd := exec.Command("go", "test")
+	cmd.Dir = testDir
+	out, err:= cmd.Output()
+	return string(out), err
 }
 
 // Creates an uncompressed .zip file containing .go files
