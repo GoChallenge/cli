@@ -27,9 +27,6 @@ func configure(c *cli.Context) {
 		return
 	}
 
-	// TODO
-	// check with server if this is ok
-
 	cfg := config{apikey}
 	cfgs, err := json.Marshal(cfg)
 	if err != nil {
@@ -42,6 +39,7 @@ func configure(c *cli.Context) {
 		fmt.Println(err)
 		return
 	}
+
 	err = ioutil.WriteFile(cfgfile, cfgs, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
