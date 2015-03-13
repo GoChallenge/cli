@@ -35,12 +35,12 @@ func main() {
 			Action:    logout,
 			Usage:     "Clear golang-challenge.com api credentials",
 		},
-		// {
-		// 	Name:      "submit",
-		// 	ShortName: "s",
-		// 	Action:    submit,
-		// 	Usage:     "Submit your solution to the latest challenge",
-		// },
+		{
+			Name:      "submit",
+			ShortName: "s",
+			Action:    submit,
+			Usage:     "Submit your solution to the latest challenge",
+		},
 	}
 
 	app.Run(os.Args)
