@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
 
 	"github.com/codegangsta/cli"
 )
 
 const (
-	logindetailsFile = "/Users/krishnasundarram/.gochallenge.go"
+	loginFileName = ".gochallenge.json"
+	defaultHost   = ""
 )
 
 type loginDetails struct {
@@ -34,14 +37,19 @@ func login(c *cli.Context) {
 	// TODO
 	// check with server if this is ok
 
-	ld := loginDetails{username, apikey, ""}
+	ld := loginDetails{username, apikey, defaultHost}
 	lds, err := json.Marshal(ld)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = ioutil.WriteFile(logindetailsFile, lds, os.ModePerm)
+	loginfile, err := getLoginFile()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = ioutil.WriteFile(loginfile, lds, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -50,7 +58,12 @@ func login(c *cli.Context) {
 }
 
 func logout(c *cli.Context) {
-	err := os.Remove(logindetailsFile)
+	loginfile, err := getLoginFile()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = os.Remove(loginfile)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -59,13 +72,25 @@ func logout(c *cli.Context) {
 }
 
 func getLoginDetails() (loginDetails, error) {
-	data, err := ioutil.ReadFile(logindetailsFile)
+	loginfile, err := getLoginFile()
+	if err != nil {
+		return loginDetails{}, err
+	}
+	data, err := ioutil.ReadFile(loginfile)
 	if err != nil {
 		return loginDetails{}, err
 	}
 	var details loginDetails
 	err = json.Unmarshal(data, &details)
 	return details, err
+}
+
+func getLoginFile() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(usr.HomeDir, loginFileName), nil
 }
 
 func getString(prompt string) (string, error) {
