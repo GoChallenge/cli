@@ -21,7 +21,7 @@ type config struct {
 }
 
 func configure(c *cli.Context) {
-	apikey := c.getString("key")
+	apikey := c.String("key")
 	if apikey == "" {
 		fmt.Println("Empty key")
 		return

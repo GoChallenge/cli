@@ -22,7 +22,7 @@ var (
 func submit(c *cli.Context) {
 	config, err := getConfig()
 	if err != nil || config.ApiKey == "" {
-		fmt.Println("Please log in")
+		fmt.Println("Please configure")
 		return
 	}
 
@@ -32,7 +32,6 @@ func submit(c *cli.Context) {
 	}
 
 	testDir := path.Dir(c.Args().First())
-	fmt.Println("testDir")
 	out, err := testsPass(testDir)
 	if err != nil {
 		fmt.Println(err)
@@ -47,7 +46,8 @@ func submit(c *cli.Context) {
 	}
 	fmt.Println("Created " + archive)
 
-	// TODO upload to server
+	// TODO
+	uploadFile(archive)	
 }
 
 func testsPass(testDir string) (string, error) {
@@ -64,25 +64,25 @@ func createArchive(args cli.Args) (string, error) {
 		return "", err
 	}
 
-	if fi.IsDir() {
-		err = archiveDir(args.First())
-	} else {
-		// they are files
-		err = archiveFiles(args)
+	archive, err := archiveName(path.Dir(args.First()))
+	if err != nil {
+		return "", err
 	}
-
+	w, err := newArchWriter(archive)
 	if err != nil {
 		return "", err
 	}
 
-	return archiveName()
+	if fi.IsDir() {
+		err = archiveDir(w, args.First())
+	} else {
+		// they are files
+		err = archiveFiles(w, args)
+	}
+	return archive, err
 }
 
-func archiveDir(root string) error {
-	w, err := newArchWriter()
-	if err != nil {
-		return err
-	}
+func archiveDir(w *zip.Writer, root string) error {
 	filepath.Walk(root, func(fpath string, info os.FileInfo, err error) error {
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".go") {
 			return nil
@@ -93,11 +93,7 @@ func archiveDir(root string) error {
 	return w.Close()
 }
 
-func archiveFiles(args cli.Args) error {
-	w, err := newArchWriter()
-	if err != nil {
-		return err
-	}
+func archiveFiles(w *zip.Writer, args cli.Args) error {
 	for _, filename := range args {
 		if !strings.HasSuffix(filename, ".go") {
 			continue
@@ -134,19 +130,6 @@ func writeToZip(w *zip.Writer, fpath string) error {
 	return err
 }
 
-func newArchWriter() (*zip.Writer, error) {
-	filename, err := archiveName()
-	if err != nil {
-		return nil, err
-	}
-	w, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
-	return zip.NewWriter(w), nil
-}
+func uploadFile(archive string) {
 
-func archiveName() (string, error) {
-	// TODO rename file with current challenge
-	return zipFile, nil
 }
