@@ -16,7 +16,6 @@ import (
 
 var (
 	zipFile  = "gochallenge.zip" // the username is added to the filename
-	errMixed = errors.New("Files and Folders both received")
 )
 
 func submit(c *cli.Context) {
@@ -25,21 +24,21 @@ func submit(c *cli.Context) {
 		fmt.Println("Please configure")
 		return
 	}
-
-	if !c.Args().Present() {
-		fmt.Println("No arguments supplied")
+	
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	testDir := path.Dir(c.Args().First())
-	out, err := testsPass(testDir)
+	out, err := testsPass(cwd)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(out)
 		return
 	}
 
-	archive, err := createArchive(c.Args())
+	archive, err := createArchive(cwd)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -58,13 +57,8 @@ func testsPass(testDir string) (string, error) {
 }
 
 // Creates an uncompressed .zip file containing .go files
-func createArchive(args cli.Args) (string, error) {
-	fi, err := os.Stat(args.First())
-	if err != nil {
-		return "", err
-	}
-
-	archive, err := archiveName(path.Dir(args.First()))
+func createArchive(cwd string) (string, error) {
+	archive, err := archiveName(path.Dir(cwd))
 	if err != nil {
 		return "", err
 	}
@@ -73,13 +67,21 @@ func createArchive(args cli.Args) (string, error) {
 		return "", err
 	}
 
-	if fi.IsDir() {
-		err = archiveDir(w, args.First())
-	} else {
-		// they are files
-		err = archiveFiles(w, args)
-	}
+	err = archiveDir(w, cwd)
 	return archive, err
+}
+
+func archiveName(dir string) (string, error) {
+	// TODO rename file with current challenge
+	return path.Join(dir, zipFile), nil
+}
+
+func newArchWriter(archive string) (*zip.Writer, error) {
+	w, err := os.Create(archive)
+	if err != nil {
+		return nil, err
+	}
+	return zip.NewWriter(w), nil
 }
 
 func archiveDir(w *zip.Writer, root string) error {
@@ -89,28 +91,6 @@ func archiveDir(w *zip.Writer, root string) error {
 		}
 		return writeToZip(w, fpath)
 	})
-
-	return w.Close()
-}
-
-func archiveFiles(w *zip.Writer, args cli.Args) error {
-	for _, filename := range args {
-		if !strings.HasSuffix(filename, ".go") {
-			continue
-		}
-
-		info, err := os.Stat(filename)
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return errMixed
-		}
-		err = writeToZip(w, filename)
-		if err != nil {
-			return err
-		}
-	}
 
 	return w.Close()
 }
