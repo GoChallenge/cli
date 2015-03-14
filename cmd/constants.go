@@ -1,5 +1,5 @@
 // Constants used in multiple places in the app
-package main
+package cmd
 
 const (
 	// apiUrl string = "http://api.golang-challenge.dev/v1/challenges"

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ type challenge struct {
 	Import string `json:"import"`
 }
 
-func fetch(c *cli.Context) {
+func Fetch(c *cli.Context) {
 	currentURL := strings.Join([]string{apiURL, "current"}, "/")
 	fmt.Println(currentURL)
 	chal, err := fetchChallenge(currentURL)

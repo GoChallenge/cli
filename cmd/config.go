@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ type config struct {
 	APIKey string `json:"apiKey"`
 }
 
-func configure(c *cli.Context) {
+func Configure(c *cli.Context) {
 	apikey := c.String("key")
 	if apikey == "" {
 		fmt.Println("Empty key")

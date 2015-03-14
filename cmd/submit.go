@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bytes"
@@ -31,7 +31,7 @@ type submission struct {
 	Data string   `json:"data"`
 }
 
-func submit(c *cli.Context) {
+func Submit(c *cli.Context) {
 	config, err := getConfig()
 	if err != nil || config.APIKey == "" {
 		fmt.Println("Please configure")

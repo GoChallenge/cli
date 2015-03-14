@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/GoChallenge/cli/cmd"
 	"github.com/codegangsta/cli"
 )
 
@@ -25,7 +26,7 @@ func main() {
 					Name:  "key, k",
 					Usage: "API Key from golang-challenge.com",
 				}},
-			Action: configure,
+			Action: cmd.Configure,
 			Usage:  "Writes the config values to a json file",
 		},
 		{
@@ -37,13 +38,13 @@ func main() {
 					Usage: "Specify if you're participating normally or for fun",
 					Value: "normal",
 				}},
-			Action: submit,
+			Action: cmd.Submit,
 			Usage:  "Submit your solution to the latest challenge",
 		},
 		{
 			Name:      "fetch",
 			ShortName: "f",
-			Action:    fetch,
+			Action:    cmd.Fetch,
 			Usage:     "Fetch the latest challenge",
 		},
 	}
