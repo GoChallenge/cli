@@ -14,12 +14,11 @@ So far it has this functionality:
 
  - `configure` - Stores apikey locally. This is used during submission
  - `fetch` - Can retrieve a repo once it has the repo name. Uses the `go get` command to do this.
- - `submit` - Checks if apikey is present. If it is, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides and uploads the file.
+ - `submit` - Checks if apikey and challenge is present. If they are, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides and uploads the file.
 
 TODO
 
  - fetch should retrieve past challenges
- - submit needs the challenge ID and submission type
 
 Testing:
  This repo contains a fake_api.json file that can be used to test a few aspects of the CLI tool. To run it, follow these steps. You'll need nodejs and NPM installed:
