@@ -16,7 +16,7 @@ const (
 )
 
 type config struct {
-	ApiKey string `json:"apiKey"`
+	APIKey string `json:"apiKey"`
 }
 
 func configure(c *cli.Context) {
@@ -48,15 +48,16 @@ func configure(c *cli.Context) {
 }
 
 func getConfig() (config, error) {
+	var cfg config
+
 	cfgfile, err := getConfigFile()
 	if err != nil {
-		return config{}, err
+		return cfg, err
 	}
 	data, err := ioutil.ReadFile(cfgfile)
 	if err != nil {
-		return config{}, err
+		return cfg, err
 	}
-	var cfg config
 	err = json.Unmarshal(data, &cfg)
 	return cfg, err
 }

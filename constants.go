@@ -3,5 +3,5 @@ package main
 
 const (
 	// apiUrl string = "http://api.golang-challenge.dev/v1/challenges"
-	apiUrl string = "http://localhost:3000"
+	apiURL string = "http://gc.falsum.me/v1/challenges"
 )

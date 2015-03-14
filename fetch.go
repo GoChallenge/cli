@@ -19,15 +19,16 @@ const (
 )
 
 type challenge struct {
-	Id     int    `json:"id"`
-	Url    string `json:"url"`
+	ID     int    `json:"id"`
+	URL    string `json:"url"`
 	Status string `json:"status"`
 	Import string `json:"import"`
 }
 
 func fetch(c *cli.Context) {
-	currentURL := strings.Join([]string{apiUrl, "current"}, "/")
-	chal, err := getChallenge(currentURL)
+	currentURL := strings.Join([]string{apiURL, "current"}, "/")
+	fmt.Println(currentURL)
+	chal, err := fetchChallenge(currentURL)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -39,12 +40,14 @@ func fetch(c *cli.Context) {
 		return
 	}
 	fmt.Println(fmt.Sprintf("Downloaded the latest challenge to %s", chal.directory()))
-	fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.Url))
+	fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.URL))
 
-	chal.store()
+	if err = chal.store(); err != nil {
+		fmt.Println(fmt.Sprintf("Could not store challenge data - %s", err.Error()))
+	}
 }
 
-func getChallenge(url string) (challenge, error) {
+func fetchChallenge(url string) (challenge, error) {
 	var chal challenge
 	resp, err := http.Get(url)
 	if err != nil {
@@ -67,6 +70,30 @@ func getChallenge(url string) (challenge, error) {
 	return chal, nil
 }
 
+func readChallengeFile() (challenge, error) {
+	var chal challenge
+
+	filepath, err := getChallengeFile()
+	if err != nil {
+		return chal, err
+	}
+
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return chal, err
+	}
+	err = json.Unmarshal(data, &chal)
+	return chal, err
+}
+
+func getChallengeFile() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(usr.HomeDir, challengeFile), nil
+}
+
 func (c challenge) download() ([]byte, error) {
 	goGetCmd := exec.Command("go", "get", c.Import)
 	return goGetCmd.CombinedOutput()
@@ -77,20 +104,15 @@ func (c challenge) directory() string {
 }
 
 func (c challenge) store() error {
-	usr, err := user.Current()
+	filepath, err := getChallengeFile()
 	if err != nil {
 		return err
 	}
-	filepath = path.Join(usr.HomeDir, challengeFile)
 
 	chal, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath, chal, os.ModePerm)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	return ioutil.WriteFile(filepath, chal, os.ModePerm)
 }
