@@ -43,7 +43,7 @@ func getChallenge(apiPath string) error {
 		return errors.New(fmt.Sprintf("Error while reading response from api: %s\n", err.Error()))
 	}
 
-	if output, err := downloadChallange(challengeData.Import); err != nil {
+	if output, err := downloadChallenge(challengeData.Import); err != nil {
 		return errors.New(fmt.Sprintf("Unable to `go get` challenge from import path %s. Command output: %s\n", challengeData.Import, output))
 	}
 
@@ -57,7 +57,7 @@ func getChallenge(apiPath string) error {
 	return nil
 }
 
-func downloadChallange(importPath string) (string, error) {
+func downloadChallenge(importPath string) (string, error) {
 	goGetCmd := exec.Command("go", "get", importPath)
 
 	output, err := goGetCmd.CombinedOutput()
