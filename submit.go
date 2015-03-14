@@ -58,7 +58,7 @@ func submit(c *cli.Context) {
 	}
 	fmt.Println("Created " + archive)
 
-	err = uploadFile(config.APIKey, archive, chal.ID)
+	err = uploadFile(archive, config.APIKey, c.String("type"), chal.ID)
 	if err != nil {
 		fmt.Println("Upload failed - ", err)
 		return
@@ -73,8 +73,8 @@ func testsPass(testDir string) (string, error) {
 	return string(out), err
 }
 
-func uploadFile(apikey, archive string, id int) error {
-	reqbody, err := getReqBody(archive)
+func uploadFile(archive, apikey, subtype string, id int) error {
+	reqbody, err := getReqBody(archive, subtype)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func uploadFile(apikey, archive string, id int) error {
 	return nil
 }
 
-func getReqBody(archive string) ([]byte, error) {
+func getReqBody(archive, subtype string) ([]byte, error) {
 	d, err := ioutil.ReadFile(archive)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,6 @@ func getReqBody(archive string) ([]byte, error) {
 	data := base64.StdEncoding.EncodeToString(d)
 
 	hash := md5.Sum(d)
-	subtype := "normal"
 	sub := submission{hash, subtype, data}
 
 	return json.Marshal(sub)

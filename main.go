@@ -23,7 +23,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "key, k",
-					Usage: "exercism.io API key (see http://exercism.io/account)",
+					Usage: "API Key from golang-challenge.com",
 				}},
 			Action: configure,
 			Usage:  "Writes the config values to a json file",
@@ -31,8 +31,14 @@ func main() {
 		{
 			Name:      "submit",
 			ShortName: "s",
-			Action:    submit,
-			Usage:     "Submit your solution to the latest challenge",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "type, t",
+					Usage: "Specify if you're participating normally or for fun",
+					Value: "normal",
+				}},
+			Action: submit,
+			Usage:  "Submit your solution to the latest challenge",
 		},
 		{
 			Name:      "fetch",
