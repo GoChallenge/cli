@@ -7,10 +7,15 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"strings"
 
 	"github.com/codegangsta/cli"
+)
+
+const (
+	challengeFile = ".gochallenge_data.json" // Will be stored in the home directory
 )
 
 type challenge struct {
@@ -32,10 +37,9 @@ func fetch(c *cli.Context) {
 		fmt.Println(fmt.Sprintf("Unable to `go get` challenge %s", chal.Import))
 		fmt.Println(output)
 		return
-	} else {
-		fmt.Println(fmt.Sprintf("Downloaded the latest challenge to %s", chal.directory()))
-		fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.Url))
 	}
+	fmt.Println(fmt.Sprintf("Downloaded the latest challenge to %s", chal.directory()))
+	fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.Url))
 
 	chal.store()
 }
@@ -73,5 +77,20 @@ func (c challenge) directory() string {
 }
 
 func (c challenge) store() error {
-	return nil
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+	filepath = path.Join(usr.HomeDir, challengeFile)
+
+	chal, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath, chal, os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

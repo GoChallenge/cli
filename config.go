@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	configFile = ".gochallenge.json" // Will be stored in the home directory
+	configFile = ".gochallenge_config.json" // Will be stored in the home directory
 )
 
 type config struct {
