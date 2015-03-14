@@ -25,15 +25,10 @@ var (
 	errAuthFail = errors.New("Authkey rejected. Please configure")
 )
 
-// TODO get the challenge ID and submission type before submission
-type submission struct {
-	Hash [16]byte `json:"hash"`
-	Type string   `json:"type"`
-	Data string   `json:"data"`
-}
-
+// Submit submits the current challenge. It checks if it correctly configured and then
+// sends a zip archive of the current directory to the specified endpoint.
 func Submit(c *cli.Context) {
-	config, err := getConfig()
+	config, err := readConfigFile()
 	if err != nil || config.APIKey == "" {
 		fmt.Println("Please configure")
 		return

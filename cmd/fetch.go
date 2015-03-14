@@ -25,6 +25,8 @@ type challenge struct {
 	Import string `json:"import"`
 }
 
+// Fetch fetches the details of the current challenge and stores it in a file (challengeFile)
+// in the home directory
 func Fetch(c *cli.Context) {
 	currentURL := strings.Join([]string{apiURL, "current"}, "/")
 	fmt.Println(currentURL)

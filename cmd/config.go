@@ -19,6 +19,7 @@ type config struct {
 	APIKey string `json:"apiKey"`
 }
 
+// Configure stores the APIKey in a file (configFile) in the home directory
 func Configure(c *cli.Context) {
 	apikey := c.String("key")
 	if apikey == "" {
@@ -47,7 +48,7 @@ func Configure(c *cli.Context) {
 	fmt.Println("Successfully configured")
 }
 
-func getConfig() (config, error) {
+func readConfigFile() (config, error) {
 	var cfg config
 
 	cfgfile, err := getConfigFile()
