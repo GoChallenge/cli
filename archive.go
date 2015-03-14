@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	zipFile = "gochallenge.zip"
 )
 
