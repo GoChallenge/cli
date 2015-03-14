@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"bytes"
-	"crypto/md5"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -74,14 +75,10 @@ func testsPass(testDir string) (string, error) {
 }
 
 func uploadFile(archive, apikey, subtype string, id int) error {
-	reqbody, err := getReqBody(archive, subtype)
-	if err != nil {
-		return err
-	}
-
 	challengeID := strconv.Itoa(id)
 	submissionURL := strings.Join([]string{apiURL, challengeID, "submissions"}, "/")
-	req, err := http.NewRequest("POST", submissionURL, bytes.NewReader(reqbody))
+
+	req, err := newfileUploadRequest(submissionURL, archive, subtype)
 	if err != nil {
 		return err
 	}
@@ -94,18 +91,38 @@ func uploadFile(archive, apikey, subtype string, id int) error {
 	if resp.StatusCode == http.StatusUnauthorized {
 		return errAuthFail
 	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Upload failed. Status code: %d\nBody: %s", resp.StatusCode, string(body))
+	}
 	return nil
 }
 
-func getReqBody(archive, subtype string) ([]byte, error) {
-	d, err := ioutil.ReadFile(archive)
+func newfileUploadRequest(url, path, subtype string) (*http.Request, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	data := base64.StdEncoding.EncodeToString(d)
+	defer file.Close()
 
-	hash := md5.Sum(d)
-	sub := submission{hash, subtype, data}
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
 
-	return json.Marshal(sub)
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, err
+	}
+
+	writer.WriteField("type", subtype)
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+	return http.NewRequest("POST", url, body)
 }
