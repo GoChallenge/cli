@@ -3,72 +3,75 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"go/build"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/codegangsta/cli"
 )
 
+type challenge struct {
+	Id     int    `json:"id"`
+	Url    string `json:"url"`
+	Status string `json:"status"`
+	Import string `json:"import"`
+}
+
 func fetch(c *cli.Context) {
-	currentChallengeApiEndpoint := strings.Join([]string{apiUrl, "current"}, "/")
-	if err := getChallenge(currentChallengeApiEndpoint); err != nil {
-		fmt.Println(err.Error())
+	currentURL := strings.Join([]string{apiUrl, "current"}, "/")
+	chal, err := getChallenge(currentURL)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	return
+	if output, err := chal.download(); err != nil {
+		fmt.Println(fmt.Sprintf("Unable to `go get` challenge %s", chal.Import))
+		fmt.Println(output)
+		return
+	} else {
+		fmt.Println(fmt.Sprintf("Downloaded the latest challenge to %s", chal.directory()))
+		fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.Url))
+	}
+
+	chal.store()
 }
 
-func getChallenge(apiPath string) error {
-	apiResponse, err := http.Get(apiPath)
-	defer apiResponse.Body.Close()
+func getChallenge(url string) (challenge, error) {
+	var chal challenge
+	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("Unable to contact API. Error: %s\n", err.Error())
+		return chal, fmt.Errorf("Unable to contact API. Error: %s\n", err.Error())
 	}
 
-	body, err := ioutil.ReadAll(apiResponse.Body)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Api responded with an error. Status code: %d\n", apiResponse.StatusCode)
+		return chal, fmt.Errorf("Api responded with an error. Status code: %d\n", resp.StatusCode)
 	}
 
-	if apiResponse.StatusCode != http.StatusOK {
-		return fmt.Errorf("Api responded with an error. Status code: %d. Body: %s\n", apiResponse.StatusCode, string(body))
+	if resp.StatusCode != http.StatusOK {
+		return chal, fmt.Errorf("Api responded with an error. Status code: %d. Body: %s\n", resp.StatusCode, string(body))
 	}
 
-	var challengeData challengeDataStruct
-	if err := json.Unmarshal(body, &challengeData); err != nil {
-		return fmt.Errorf("Error while reading response from api: %s\n", err.Error())
+	if err := json.Unmarshal(body, &chal); err != nil {
+		return chal, fmt.Errorf("Error while reading response from api: %s\n", err.Error())
 	}
+	return chal, nil
+}
 
-	if output, err := downloadChallenge(challengeData.Import); err != nil {
-		return fmt.Errorf("Unable to `go get` challenge from import path %s. Command output: %s\n", challengeData.Import, output)
-	}
+func (c challenge) download() ([]byte, error) {
+	goGetCmd := exec.Command("go", "get", c.Import)
+	return goGetCmd.CombinedOutput()
+}
 
-	dir, err := getPackageDirectory(challengeData.Import)
-	if err != nil {
-		return fmt.Errorf("Error determining downloaded directory: %s\n", err.Error())
-	}
+func (c challenge) directory() string {
+	return path.Join(os.Getenv("GOPATH"), "src", c.Import)
+}
 
-	fmt.Printf("Downloaded the latest challenge to %s. See README.md inside the directory or go to %s for information on the challenge\n", dir, challengeData.Url)
-
+func (c challenge) store() error {
 	return nil
-}
-
-func downloadChallenge(importPath string) (string, error) {
-	goGetCmd := exec.Command("go", "get", importPath)
-
-	output, err := goGetCmd.CombinedOutput()
-	return string(output), err
-}
-
-func getPackageDirectory(importPath string) (string, error) {
-	pkg, err := build.Import(importPath, os.Getenv("GOPATH"), build.FindOnly)
-	if err != nil {
-		return "", err
-	}
-
-	return pkg.Dir, nil
 }

@@ -80,8 +80,8 @@ func uploadFile(apikey, archive string) error {
 		return err
 	}
 
-	challengeID = "1"
-	submissionURL := strings.Join([]string(apiUrl, challengeID, "submissions"), "/")
+	challengeID := "1"
+	submissionURL := strings.Join([]string{apiUrl, challengeID, "submissions"}, "/")
 	req, err := http.NewRequest("POST", submissionURL, bytes.NewReader(reqbody))
 	if err != nil {
 		return err
