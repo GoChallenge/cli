@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -33,38 +33,37 @@ type submission struct {
 
 func submit(c *cli.Context) {
 	config, err := getConfig()
-	if err != nil || config.ApiKey == "" {
+	if err != nil || config.APIKey == "" {
 		fmt.Println("Please configure")
 		return
 	}
 
-	cwd, err := os.Getwd()
+	chal, err := readChallengeFile()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Challenge not found. Please fetch")
 		return
 	}
+	fmt.Println(fmt.Sprintf("Submitting challenge %d", chal.ID))
 
-	out, err := testsPass(cwd)
-	if err != nil {
+	if out, err := testsPass(chal.directory()); err != nil {
 		fmt.Println(err)
 		fmt.Println(out)
 		return
 	}
 
-	archive, err := createArchive(cwd)
+	archive, err := createArchive(chal.directory())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println("Created " + archive)
 
-	// TODO
-	err = uploadFile(config.ApiKey, archive)
+	err = uploadFile(config.APIKey, archive, chal.ID)
 	if err != nil {
 		fmt.Println("Upload failed - ", err)
 		return
 	}
-	fmt.Println("Successfully uploaded")
+	fmt.Println("Successfully submitted")
 }
 
 func testsPass(testDir string) (string, error) {
@@ -74,14 +73,14 @@ func testsPass(testDir string) (string, error) {
 	return string(out), err
 }
 
-func uploadFile(apikey, archive string) error {
+func uploadFile(apikey, archive string, id int) error {
 	reqbody, err := getReqBody(archive)
 	if err != nil {
 		return err
 	}
 
-	challengeID := "1"
-	submissionURL := strings.Join([]string{apiUrl, challengeID, "submissions"}, "/")
+	challengeID := strconv.Itoa(id)
+	submissionURL := strings.Join([]string{apiURL, challengeID, "submissions"}, "/")
 	req, err := http.NewRequest("POST", submissionURL, bytes.NewReader(reqbody))
 	if err != nil {
 		return err
