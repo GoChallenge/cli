@@ -2,15 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/codegangsta/cli"
 	"go/build"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/codegangsta/cli"
 )
 
 func fetch(c *cli.Context) {
@@ -26,30 +26,30 @@ func getChallenge(apiPath string) error {
 	apiResponse, err := http.Get(apiPath)
 	defer apiResponse.Body.Close()
 	if err != nil {
-		return errors.New(fmt.Sprintf("Unable to contact API. Error: %s\n", err.Error()))
+		return fmt.Errorf("Unable to contact API. Error: %s\n", err.Error())
 	}
 
 	body, err := ioutil.ReadAll(apiResponse.Body)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Api responded with an error. Status code: %d\n", apiResponse.StatusCode))
+		return fmt.Errorf("Api responded with an error. Status code: %d\n", apiResponse.StatusCode)
 	}
 
 	if apiResponse.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("Api responded with an error. Status code: %d. Body: %s\n", apiResponse.StatusCode, string(body)))
+		return fmt.Errorf("Api responded with an error. Status code: %d. Body: %s\n", apiResponse.StatusCode, string(body))
 	}
 
 	var challengeData challengeDataStruct
 	if err := json.Unmarshal(body, &challengeData); err != nil {
-		return errors.New(fmt.Sprintf("Error while reading response from api: %s\n", err.Error()))
+		return fmt.Errorf("Error while reading response from api: %s\n", err.Error())
 	}
 
 	if output, err := downloadChallenge(challengeData.Import); err != nil {
-		return errors.New(fmt.Sprintf("Unable to `go get` challenge from import path %s. Command output: %s\n", challengeData.Import, output))
+		return fmt.Errorf("Unable to `go get` challenge from import path %s. Command output: %s\n", challengeData.Import, output)
 	}
 
 	dir, err := getPackageDirectory(challengeData.Import)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error determining downloaded directory: %s\n", err.Error()))
+		return fmt.Errorf("Error determining downloaded directory: %s\n", err.Error())
 	}
 
 	fmt.Printf("Downloaded the latest challenge to %s. See README.md inside the directory or go to %s for information on the challenge\n", dir, challengeData.Url)
