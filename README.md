@@ -1,27 +1,23 @@
 Go Challenge CLI
 ===============
-The requirement is to create a web site and associated tools to allow easy participation in the GoChallenge. 
 
 The process for the first GoChallenge was:
 
  - The participant downloaded a zip file
  - The participant wrote code to make those test cases pass
- - The entire Go package (the code written by the participant and the original files) was zipped up and emailed to the organiser, who then manually evaluated each submisssion.
+ - The entire folder was zipped up and emailed to the organiser, who then manually evaluated each submisssion.
 
 From the second challenge onwards, participants will have the option of using a CLI (inspired by exercism.io's CLI)
 
-So far it has this functionality:
+To install:
 
- - `configure` - Stores apikey locally. This is used during submission
- - `fetch` - Can retrieve a repo once it has the repo name. Uses the `go get` command to do this.
- - `submit` - Checks if apikey and challenge is present. If they are, runs the tests in the directory specified. If tests pass, makes a zip archive of the files/folder the user provides and uploads the file.
+ - Set up Go - http://golang.org/doc/install
+ - Run `go get github.com/GoChallenge/cli` from the command line
+ - `cd $GOPATH/src/GoChallenge/cli/gochallenge`
+ - `go install`
 
-TODO
+To use:
 
- - fetch should retrieve past challenges
-
-Testing:
- This repo contains a fake_api.json file that can be used to test a few aspects of the CLI tool. To run it, follow these steps. You'll need nodejs and NPM installed:
- - npm install -g json-server
- - json-server fake_api.json
- - Enjoy!
+ - `gochallenge configure -k "key"` - Stores your key locally. Used when verifying your submission. Get this key from http://golang-challenge.com
+ - `gochallenge fetch` - Fetches the latest challenge. The option `-o` fetches older challenges as well.
+ - `gochallenge submit` - Runs the tests in the folder. If the tests pass, it uploads a .zip archive of the folder to the GoChallenge website.
