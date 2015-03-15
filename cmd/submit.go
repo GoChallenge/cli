@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,10 @@ const (
 var (
 	errAuthFail = errors.New("Authkey rejected. Please configure")
 )
+
+type submissionInfo struct {
+	SubmissionType string `json:"type"`
+}
 
 // Submit submits the current challenge. It checks if it correctly configured and then
 // sends a zip archive of the current directory to the specified endpoint.
@@ -54,7 +59,7 @@ func Submit(c *cli.Context) {
 	}
 	fmt.Println("Created " + archive)
 
-	err = uploadFile(archive, config.APIKey, c.String("type"), chal.ID)
+	err = uploadFile(archive, config.APIKey, &submissionInfo{SubmissionType: c.String("type")}, chal.ID)
 	if err != nil {
 		fmt.Println("Upload failed - ", err)
 		return
@@ -69,11 +74,11 @@ func testsPass(testDir string) (string, error) {
 	return string(out), err
 }
 
-func uploadFile(archive, apikey, subtype string, id int) error {
+func uploadFile(archive, apikey string, info *submissionInfo, id int) error {
 	challengeID := strconv.Itoa(id)
 	submissionURL := strings.Join([]string{apiURL, challengeID, "submissions"}, "/")
 
-	req, err := newfileUploadRequest(submissionURL, archive, subtype)
+	req, err := newfileUploadRequest(submissionURL, archive, info)
 	if err != nil {
 		return err
 	}
@@ -89,35 +94,59 @@ func uploadFile(archive, apikey, subtype string, id int) error {
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("Upload failed. Status code: %d\nBody: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("Status code: %d\nBody: %s", resp.StatusCode, string(body))
 	}
 	return nil
 }
 
-func newfileUploadRequest(url, path, subtype string) (*http.Request, error) {
-	file, err := os.Open(path)
+func newfileUploadRequest(url, path string, info *submissionInfo) (*http.Request, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer f.Close()
 
 	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filepath.Base(path))
+	w := multipart.NewWriter(body)
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Type", "application/json; charset=utf-8")
+	p, err := w.CreatePart(h)
+	if err != nil {
+		return nil, err
+	}
+	enc := json.NewEncoder(p)
+	if err := enc.Encode(*info); err != nil {
+		return nil, err
+	}
+
+	h = make(textproto.MIMEHeader)
+	h.Set("Content-Type", "application/zip")
+	p, err = w.CreatePart(h)
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(p, f)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = io.Copy(part, file)
+	err = w.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	writer.WriteField("type", subtype)
-
-	err = writer.Close()
+	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		return nil, err
 	}
-	return http.NewRequest("POST", url, body)
+	// set type & boundary
+	req.Header.Set("Content-Type", fmt.Sprintf("multipart/related; boundary=%s", w.Boundary()))
+	return req, nil
+}
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
 }
