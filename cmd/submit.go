@@ -27,7 +27,7 @@ var (
 )
 
 type submissionInfo struct {
-	SubmissionType string `json:"type"`
+	Type string `json:"type"`
 }
 
 // Submit submits the current challenge. It checks if it correctly configured and then
@@ -41,25 +41,30 @@ func Submit(c *cli.Context) {
 
 	chal, err := readChallengeFile()
 	if err != nil {
-		fmt.Println("Challenge not found. Please fetch")
+		fmt.Println("Challenge not found. Please run fetch")
 		return
 	}
-	fmt.Println(fmt.Sprintf("Submitting challenge %d", chal.ID))
+	if chal.Status != "open" {
+		fmt.Printf("Sorry, %s is no longer open\n", chal.Name)
+		return
+	}
+	fmt.Printf("Submitting %s\n", chal.Name)
 
 	if out, err := testsPass(chal.directory()); err != nil {
 		fmt.Println(err)
 		fmt.Println(out)
 		return
 	}
+	fmt.Println("Tests pass")
 
 	archive, err := createArchive(chal.directory())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Created " + archive)
+	fmt.Printf("Created %s\n", archive)
 
-	err = uploadFile(archive, config.APIKey, &submissionInfo{SubmissionType: c.String("type")}, chal.ID)
+	err = uploadFile(archive, config.APIKey, &submissionInfo{Type: c.String("type")}, chal.ID)
 	if err != nil {
 		fmt.Println("Upload failed - ", err)
 		return

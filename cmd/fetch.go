@@ -20,6 +20,7 @@ const (
 
 type challenge struct {
 	ID     int    `json:"id"`
+	Name   string `json:"name"`
 	URL    string `json:"url"`
 	Status string `json:"status"`
 	Import string `json:"import"`
