@@ -144,9 +144,3 @@ func newfileUploadRequest(url, path string, info *submissionInfo) (*http.Request
 	req.Header.Set("Content-Type", fmt.Sprintf("multipart/related; boundary=%s", w.Boundary()))
 	return req, nil
 }
-
-var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
-
-func escapeQuotes(s string) string {
-	return quoteEscaper.Replace(s)
-}
