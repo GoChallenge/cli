@@ -44,8 +44,13 @@ func main() {
 		{
 			Name:      "fetch",
 			ShortName: "f",
-			Action:    cmd.Fetch,
-			Usage:     "Fetch the latest challenge",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "older, o",
+					Usage: "Fetch older challenges",
+				}},
+			Action: cmd.Fetch,
+			Usage:  "Fetch the latest challenge",
 		},
 	}
 

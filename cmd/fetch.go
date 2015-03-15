@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,38 +30,71 @@ type challenge struct {
 // Fetch fetches the details of the current challenge and stores it in a file (challengeFile)
 // in the home directory
 func Fetch(c *cli.Context) {
-	currentURL := strings.Join([]string{apiURL, "current"}, "/")
-	fmt.Println(currentURL)
-	chal, err := fetchChallenge(currentURL)
+	if c.Bool("older") {
+		err := fetchOlder()
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
+	chal, err := fetchLatest()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	if output, err := chal.download(); err != nil {
-		fmt.Println(fmt.Sprintf("Unable to `go get` challenge %s", chal.Import))
+		fmt.Printf("Unable to `go get` challenge %s\n", chal.Import)
 		fmt.Println(output)
 		return
 	}
-	fmt.Println(fmt.Sprintf("Downloaded the latest challenge to %s", chal.directory()))
-	fmt.Println(fmt.Sprintf("See README.md inside the directory or go to %s for information on the challenge", chal.URL))
+	fmt.Printf("Downloaded the latest challenge to %s\n", chal.directory())
+	fmt.Printf("See README.md or go to %s for information\n", chal.URL)
 
 	if err = chal.store(); err != nil {
-		fmt.Println(fmt.Sprintf("Could not store challenge data - %s", err.Error()))
+		fmt.Printf("Could not store challenge data - %s\n", err)
 	}
 }
 
-func fetchChallenge(url string) (challenge, error) {
-	var chal challenge
+func fetchOlder() error {
+	challenges, err := fetchChallenges(apiURL)
+	if err != nil {
+		return err
+	}
+	if len(challenges) == 0 {
+		return errors.New("Found no challenges")
+	}
+	for _, chal := range challenges {
+		fmt.Printf("Downloading %s\n", chal.Name)
+		if output, err := chal.download(); err != nil {
+			fmt.Printf("Unable to `go get` challenge %s\n", chal.Import)
+			fmt.Println(output)
+		}
+	}
+	return nil
+}
+
+func fetchLatest() (challenge, error) {
+	currentURL := strings.Join([]string{apiURL, "current"}, "/")
+	chals, err := fetchChallenges(currentURL)
+	if err != nil {
+		return challenge{}, err
+	}
+	return chals[0], nil
+}
+
+func fetchChallenges(url string) ([]challenge, error) {
+	var chal []challenge
 	resp, err := http.Get(url)
 	if err != nil {
-		return chal, fmt.Errorf("Unable to contact API. Error: %s\n", err.Error())
+		return chal, fmt.Errorf("Unable to contact API. Error: %s\n", err)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return chal, fmt.Errorf("Api responded with an error. Status code: %d\n", resp.StatusCode)
+		return chal, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -68,7 +102,7 @@ func fetchChallenge(url string) (challenge, error) {
 	}
 
 	if err := json.Unmarshal(body, &chal); err != nil {
-		return chal, fmt.Errorf("Error while reading response from api: %s\n", err.Error())
+		return chal, fmt.Errorf("Error while reading response from api: %s\n", err)
 	}
 	return chal, nil
 }
