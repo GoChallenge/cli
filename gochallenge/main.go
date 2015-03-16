@@ -37,7 +37,8 @@ func main() {
 					Name:  "type, t",
 					Usage: "Specify if you're participating normally or for fun",
 					Value: "normal",
-				}},
+				},
+			},
 			Action: cmd.Submit,
 			Usage:  "Submit your solution to the latest challenge",
 		},
@@ -45,12 +46,23 @@ func main() {
 			Name:      "fetch",
 			ShortName: "f",
 			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "challenge, c",
+					Usage: "Fetch specified challenge",
+				},
 				cli.BoolFlag{
-					Name:  "older, o",
-					Usage: "Fetch older challenges",
-				}},
+					Name:  "all, a",
+					Usage: "Fetch all challenges -- Use carefully!",
+				},
+			},
 			Action: cmd.Fetch,
 			Usage:  "Fetch the latest challenge",
+		},
+		{
+			Name:      "list",
+			ShortName: "l",
+			Action:    cmd.List,
+			Usage:     "List all available challenges",
 		},
 	}
 

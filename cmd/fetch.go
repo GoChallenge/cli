@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -30,81 +31,113 @@ type challenge struct {
 // Fetch fetches the details of the current challenge and stores it in a file (challengeFile)
 // in the home directory
 func Fetch(c *cli.Context) {
-	if c.Bool("older") {
-		err := fetchOlder()
-		if err != nil {
-			fmt.Println(err)
-		}
-		return
+	var err error
+	if c.Bool("all") {
+		err = fetchAll()
+	} else if c.IsSet("challenge") {
+		_, err = fetchChallenge(c.String("challenge"))
+	} else {
+		err = fetchCurrent()
 	}
-
-	chal, err := fetchLatest()
 	if err != nil {
 		fmt.Println(err)
-		return
-	}
-
-	if output, err := chal.download(); err != nil {
-		fmt.Printf("Unable to `go get` challenge %s\n", chal.Import)
-		fmt.Println(output)
-		return
-	}
-	fmt.Printf("Downloaded the latest challenge to %s\n", chal.directory())
-	fmt.Printf("See README.md or go to %s for information\n", chal.URL)
-
-	if err = chal.store(); err != nil {
-		fmt.Printf("Could not store challenge data - %s\n", err)
 	}
 }
 
-func fetchOlder() error {
-	challenges, err := fetchChallenges(apiURL)
+func fetchAll() error {
+	challenges, err := getChallengeDescriptors(apiURL)
 	if err != nil {
 		return err
 	}
-	if len(challenges) == 0 {
-		return errors.New("Found no challenges")
+	return fetchChallenges(challenges)
+}
+
+func fetchCurrent() error {
+	chal, err := fetchChallenge("current")
+	if err != nil {
+		return err
 	}
-	for _, chal := range challenges {
-		fmt.Printf("Downloading %s\n", chal.Name)
-		if output, err := chal.download(); err != nil {
-			fmt.Printf("Unable to `go get` challenge %s\n", chal.Import)
-			fmt.Println(output)
-		}
+	fmt.Printf("See README.md or go to %s for information\n", chal.URL)
+
+	if err = chal.store(); err != nil {
+		return fmt.Errorf("Could not store challenge data - %s\n", err)
 	}
 	return nil
 }
 
-func fetchLatest() (challenge, error) {
-	currentURL := strings.Join([]string{apiURL, "current"}, "/")
-	chals, err := fetchChallenges(currentURL)
+func fetchChallenge(ID string) (*challenge, error) {
+	challenges, err := getChallengeDescriptors(strings.Join([]string{apiURL, ID}, "/"))
 	if err != nil {
-		return challenge{}, err
+		return nil, err
 	}
-	return chals[0], nil
+	if len(challenges) != 1 {
+		return nil, fmt.Errorf("Found multiple challenges in response to single challenge query for challenge \"%s\"", ID)
+	}
+	err = fetchChallenges(challenges)
+	return &challenges[0], nil
 }
 
-func fetchChallenges(url string) ([]challenge, error) {
-	var chal []challenge
+func fetchChallenges(descriptors []challenge) error {
+	for _, chal := range descriptors {
+		fmt.Printf("Downloading %s to %s ........ ", chal.Name, chal.directory())
+		if output, err := chal.download(); err != nil {
+			fmt.Println()
+			return fmt.Errorf("Unable to `go get` challenge %s\n%s", chal.Import, output)
+		}
+		fmt.Println("Done")
+	}
+	return nil
+}
+
+func getChallengeDescriptors(url string) ([]challenge, error) {
+	var challenges []challenge
 	resp, err := http.Get(url)
 	if err != nil {
-		return chal, fmt.Errorf("Unable to contact API. Error: %s\n", err)
+		return nil, fmt.Errorf("Unable to contact API. Error: %s\n", err)
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 100*1024)) // limit response size to 100KB
 	if err != nil {
-		return chal, err
+		return nil, err
 	}
-
 	if resp.StatusCode != http.StatusOK {
-		return chal, fmt.Errorf("Api responded with an error. Status code: %d. Body: %s\n", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("Api responded with an error. Status code: %d\n", resp.StatusCode)
+	}
+	c, err := decodeSingleDescriptor(body)
+	if err != nil {
+		// Couldn't decode as a single challenge descriptor, try as an array.
+		challenges, err = decodeMultipleDescriptors(body)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		challenges = append(challenges, *c)
 	}
 
-	if err := json.Unmarshal(body, &chal); err != nil {
-		return chal, fmt.Errorf("Error while reading response from api: %s\n", err)
+	if len(challenges) == 0 {
+		return nil, errors.New("Found no challenges")
 	}
-	return chal, nil
+
+	return challenges, nil
+}
+
+func decodeSingleDescriptor(body []byte) (*challenge, error) {
+	var c challenge
+	err := json.Unmarshal(body, &c)
+	if err != nil {
+		return nil, fmt.Errorf("Error while reading response from api: %s\n", err)
+	}
+	return &c, nil
+}
+
+func decodeMultipleDescriptors(body []byte) ([]challenge, error) {
+	var challenges []challenge
+	err := json.Unmarshal(body, &challenges)
+	if err != nil {
+		return nil, fmt.Errorf("Error while reading response from api: %s\n", err)
+	}
+	return challenges, nil
 }
 
 func readChallengeFile() (challenge, error) {
