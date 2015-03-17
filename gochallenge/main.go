@@ -11,7 +11,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "Go Challenge Submission Tool"
-	app.Version = "0.1 alpha"
+	app.Version = "0.1 beta"
 	app.Usage = "A tool to help programmers participate in the monthly Go challenge"
 	app.Authors = []cli.Author{
 		{
