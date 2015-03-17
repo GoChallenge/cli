@@ -9,7 +9,7 @@ import (
 )
 
 func List(c *cli.Context) {
-	challenges, err := getChallengeDescriptors(apiURL)
+	challenges, err := getChallengeDescriptors(API_URL)
 	if err != nil {
 		fmt.Println(err)
 		return

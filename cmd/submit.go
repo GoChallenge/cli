@@ -81,7 +81,7 @@ func testsPass(testDir string) (string, error) {
 
 func uploadFile(archive, apikey string, info *submissionInfo, id int) error {
 	challengeID := strconv.Itoa(id)
-	submissionURL := strings.Join([]string{apiURL, challengeID, "submissions"}, "/")
+	submissionURL := strings.Join([]string{API_URL, challengeID, "submissions"}, "/")
 
 	req, err := newfileUploadRequest(submissionURL, archive, info)
 	if err != nil {

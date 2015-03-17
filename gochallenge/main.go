@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/GoChallenge/cli/cmd"
@@ -16,6 +17,21 @@ func main() {
 		{
 			Name: "https://github.com/GoChallenge/cli/graphs/contributors",
 		},
+	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:   "server, s",
+			Usage:  "The server host:port",
+			EnvVar: "GOCHALLENGE_SERVER",
+		},
+	}
+	app.Before = func(c *cli.Context) error {
+		server := "gc.falsum.me"
+		if c.IsSet("server") {
+			server = c.String("server")
+		}
+		cmd.API_URL = fmt.Sprintf("http://%s/v1/challenges", server)
+		return nil
 	}
 	app.Commands = []cli.Command{
 		{

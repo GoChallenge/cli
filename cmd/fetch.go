@@ -45,7 +45,7 @@ func Fetch(c *cli.Context) {
 }
 
 func fetchAll() error {
-	challenges, err := getChallengeDescriptors(apiURL)
+	challenges, err := getChallengeDescriptors(API_URL)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func fetchCurrent() error {
 }
 
 func fetchChallenge(ID string) (*challenge, error) {
-	challenges, err := getChallengeDescriptors(strings.Join([]string{apiURL, ID}, "/"))
+	challenges, err := getChallengeDescriptors(strings.Join([]string{API_URL, ID}, "/"))
 	if err != nil {
 		return nil, err
 	}
